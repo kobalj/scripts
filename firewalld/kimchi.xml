@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>Kimchy</short>
+  <description>Kimchy libvirt/KVM web frontend</description>
+  <port protocol="tcp" port="5000"/>
+  <port protocol="tcp" port="5001"/>
+  <port protocol="tcp" port="64667"/>
+</service>
