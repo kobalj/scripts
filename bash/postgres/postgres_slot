@@ -1,0 +1,176 @@
+#!/bin/bash
+
+# global variables
+PREFIX="postgresql-"
+DEST_DIR="/usr"
+SRC_DIR="/usr/local"
+
+FOLDER_MAP=("/include/postgresql" "/share/postgresql" "/lib/pgxs")
+
+# Function to check if folder exists and if not create it
+function addfolders() {
+  for i in "${FOLDER_MAP[@]}"; do
+    if [ ! -d "$i" ]; then
+      ln -s "$SRC_DIR/$PREFIX$slot$i" "$DEST_DIR$i"
+    fi
+  done
+}
+
+# Function to remove folder if they exist
+function delfolders() {
+  for i in "${FOLDER_MAP[@]}"; do
+    if [ -d "$DEST_DIR$i" ]; then
+      rm "$DEST_DIR$i"
+    fi
+  done
+}
+
+# Get available slots
+function availableslots() {
+  local list=($(find $SRC_DIR -maxdepth 1 -mindepth 1 -name "postgresql*" | awk -F'/' '{printf("%s\n",$4)}' | awk -F'-' '{printf("%s\n",$2)}' | uniq | sort))
+  echo "${list[@]}"
+}
+
+# skripta za izpis trenutno namescenih verzij in tista, ki je definirana za primarno
+function display_slots() {
+  local list=($(availableslots))
+
+  # find the primary one
+  write_info "Installed PostgreSQL libs:"
+  write_info "--------------------------"
+  for i in "${list[@]}"; do
+    local sts=" "
+    if [ "$i" == "$installedslot" ]; then
+      local sts="$(tput setaf 2)*$(tput sgr0)"
+    fi
+    echo " ($sts) $i"
+  done
+}
+
+# Check if a slot is installed and set the slot version
+function get_installedslot() {
+  local path=$DEST_DIR${FOLDER_MAP[0]}
+
+  if [ -d "$path" ]; then
+    line=($(ls -l $path))
+    installedslot=$(echo ${line[${#line[@]} - 1]} | awk -F'/' '{printf("%s\n",$4)}' | awk -F'-' '{printf("%s\n",$2)}') 
+  else 
+    installedslot=""
+  fi
+}
+
+function getfiles() {
+  local list=($(find "$SRC_DIR/$PREFIX$slot" -not -path "*share*" -not -path "*include*" -not -path "*pgxs*" -type f | sed "s/\/usr\/local\/$PREFIX$slot//"))
+  echo "${list[@]}"
+}
+
+function removeinstalledslot() {
+  local flist=($(getfiles))
+  for i in "${flist[@]}"; do
+    # remove files for the slot
+    rm "$DEST_DIR$i"
+  done
+
+  # remove the folders 
+  delfolders
+
+  installedslot=""
+}
+
+function installslot() {
+  # first we do the maps
+  addfolders
+
+  # we do symbolic links for files
+  local flist=($(getfiles))
+  for i in "${flist[@]}"; do
+    ln -s "$SRC_DIR/$PREFIX$slot$i" "$DEST_DIR$i"
+  done
+  
+}
+
+# Write warning message
+function write_warning() {
+  echo "$(tput setaf 1)$1$(tput sgr0)"
+}
+
+# Write info message
+function write_info() {
+  echo "$(tput setaf 2)$1$(tput sgr0)"
+}
+
+# Display commands
+function help() {
+  echo "Use: pg-slot [argument]"
+  echo "PostgreSQL slot selector"
+  echo ""
+  echo "Available arguments"
+  echo "-a, --available 	Displays the available slots"
+  echo "-s [slot], --set [slot]	Sets/replaces the selected slot"
+  echo "-r, --remove		Removes the selected slot"
+  echo "-h, --help		Displays this help"
+}
+
+# Displax coutner
+function warning_count() {
+  write_warning "$1 (Control-C to abort) in..."
+  local i=6
+  while [[ $[i--] -gt 0 ]] ; do
+    echo -n " $i"
+    sleep 1
+  done
+  echo ""
+}
+
+# Main part of the script
+
+# For all commands we get the installed slot
+get_installedslot
+
+if [ "$1" == "-a" ] || [ "$1" == "--available" ]; then
+  display_slots
+  exit
+elif [ "$1" == "-s" ]; then
+  array=($(availableslots))
+
+  if [ "$2" != "" ]; then
+    if [[ " ${array[@]} " =~ " $2 " ]]; then
+      # found the slot, check if another slot is installed
+      if [ "$installedslot" != "" ]; then
+        write_warning "Found installed slot $installedslot"
+        warning_count "Removing slot $2"
+        slot=$installedslot
+        removeinstalledslot
+        write_info "Slot $slot removed"
+      fi
+
+      # installing new slot
+      write_info "Installing slot $2"
+      slot=$2
+      installslot
+      write_info "Slot $2 installed"
+
+    else
+      write_warning "Slot $2 is not available"
+    fi
+  else 
+    write_warning "No slot provided"
+  fi
+
+  exit
+elif [ "$1" == "-r" ] || [ "$1" == "--remove" ]; then
+  if [ "$installedslot" != "" ]; then
+    warning_count "Removing slot $installedslot"
+    slot=$installedslot
+    removeinstalledslot
+    write_info "Slot $slot removed"
+  else 
+    write_warning "Slot is not set"
+  fi
+  exit
+else
+  help
+  exit
+fi
+
+# EOF
