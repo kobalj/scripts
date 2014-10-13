@@ -22,106 +22,14 @@
 PROGNAME=${0##*/}
 VERSION="1.0"
 
-# global variables
+# Global variables
 PREFIX="postgresql-"
 DEST_DIR="/usr"
 SRC_DIR="/usr/local"
 
 FOLDER_MAP=("/include/postgresql" "/share/postgresql" "/lib/pgxs")
 
-# Function to check if folder exists and if not create it
-function addfolders() {
-  for i in "${FOLDER_MAP[@]}"; do
-    if [ ! -d "$i" ]; then
-      ln -s "$SRC_DIR/$PREFIX$slot$i" "$DEST_DIR$i"
-    fi
-  done
-}
-
-# Function to remove folder if they exist
-function delfolders() {
-  for i in "${FOLDER_MAP[@]}"; do
-    if [ -d "$DEST_DIR$i" ]; then
-      rm "$DEST_DIR$i"
-    fi
-  done
-}
-
-# Get available slots
-function availableslots() {
-  local list=($(find $SRC_DIR -maxdepth 1 -mindepth 1 -name "postgresql*" | awk -F'/' '{printf("%s\n",$4)}' | awk -F'-' '{printf("%s\n",$2)}' | uniq | sort))
-  echo "${list[@]}"
-}
-
-# skripta za izpis trenutno namescenih verzij in tista, ki je definirana za primarno
-function display_slots() {
-  local list=($(availableslots))
-
-  # find the primary one
-  write_info "Installed PostgreSQL libs:"
-  write_info "--------------------------"
-  for i in "${list[@]}"; do
-    local sts=" "
-    if [ "$i" == "$installedslot" ]; then
-      local sts="$(tput setaf 2)*$(tput sgr0)"
-    fi
-    echo " ($sts) $i"
-  done
-}
-
-# Check if a slot is installed and set the slot version
-function get_installedslot() {
-  local path=$DEST_DIR${FOLDER_MAP[0]}
-
-  if [ -d "$path" ]; then
-    line=($(ls -l $path))
-    installedslot=$(echo ${line[${#line[@]} - 1]} | awk -F'/' '{printf("%s\n",$4)}' | awk -F'-' '{printf("%s\n",$2)}') 
-  else 
-    installedslot=""
-  fi
-}
-
-function getfiles() {
-  local list=($(find "$SRC_DIR/$PREFIX$slot" -not -path "*share*" -not -path "*include*" -not -path "*pgxs*" -type f | sed "s/\/usr\/local\/$PREFIX$slot//"))
-  echo "${list[@]}"
-}
-
-function removeinstalledslot() {
-  local flist=($(getfiles))
-  for i in "${flist[@]}"; do
-    # remove files for the slot
-    rm "$DEST_DIR$i"
-  done
-
-  # remove the folders 
-  delfolders
-
-  installedslot=""
-}
-
-function installslot() {
-  # first we do the maps
-  addfolders
-
-  # we do symbolic links for files
-  local flist=($(getfiles))
-  for i in "${flist[@]}"; do
-    ln -s "$SRC_DIR/$PREFIX$slot$i" "$DEST_DIR$i"
-  done
-  
-}
-
-# Write warning message
-function write_warning() {
-  echo "$(tput setaf 1)$1$(tput sgr0)"
-}
-
-# Write info message
-function write_info() {
-  echo "$(tput setaf 2)$1$(tput sgr0)"
-}
-
-# Display commands
+# Display help message
 function help() {
   cat <<- _EOF_
   ${PROGNAME} ${VERSION}
@@ -137,7 +45,17 @@ function help() {
 _EOF_
 }
 
-# Displax coutner
+# Write info message
+function write_info() {
+  echo "$(tput setaf 2)$1$(tput sgr0)"
+}
+
+# Write warning message
+function write_warning() {
+  echo "$(tput setaf 1)$1$(tput sgr0)"
+}
+
+# Display coutner
 function warning_count() {
   write_warning "$1 (Control-C to abort) in..."
   local i=6
@@ -148,9 +66,96 @@ function warning_count() {
   echo ""
 }
 
-# Main part of the script
+# Function to generate symbolic links for specific folders
+function addfolders() {
+  for i in "${FOLDER_MAP[@]}"; do
+    if [ ! -d "$i" ]; then
+      ln -s "$SRC_DIR/$PREFIX$slot$i" "$DEST_DIR$i"
+    fi
+  done
+}
 
-# For all commands we get the installed slot
+# Function to remove symbolic links if they exist
+function delfolders() {
+  for i in "${FOLDER_MAP[@]}"; do
+    if [ -d "$DEST_DIR$i" ]; then
+      rm "$DEST_DIR$i"
+    fi
+  done
+}
+
+# Get and return the list of available slots
+function availableslots() {
+  local list=($(find $SRC_DIR -maxdepth 1 -mindepth 1 -name "postgresql*" | awk -F'/' '{printf("%s\n",$4)}' | awk -F'-' '{printf("%s\n",$2)}' | uniq | sort))
+  echo "${list[@]}"
+}
+
+# Display the available slots and mark the installed one
+function display_slots() {
+  local list=($(availableslots))
+
+  # find the primary one
+  write_info "Installed PostgreSQL libs:"
+  write_info "--------------------------"
+  for i in "${list[@]}"; do
+    local sts=" "
+    if [ "$i" == "$installedslot" ]; then
+      local sts="$(tput setaf 2)*$(tput sgr0)"
+    fi
+    echo " ($sts) $i"
+  done
+}
+
+# Get the slot version that is installed
+function get_installedslot() {
+  local path=$DEST_DIR${FOLDER_MAP[0]}
+
+  if [ -d "$path" ]; then
+    line=($(ls -l $path))
+    installedslot=$(echo ${line[${#line[@]} - 1]} | awk -F'/' '{printf("%s\n",$4)}' | awk -F'-' '{printf("%s\n",$2)}') 
+  else 
+    installedslot=""
+  fi
+}
+
+# Get the list of files that need to be installed
+function getfiles() {
+  local list=($(find "$SRC_DIR/$PREFIX$slot" -not -path "*share*" -not -path "*include*" -not -path "*pgxs*" -type f | sed "s/\/usr\/local\/$PREFIX$slot//"))
+  echo "${list[@]}"
+}
+
+# Remove the files for the slot that is being removed
+function removeinstalledslot() {
+  local flist=($(getfiles))
+  for i in "${flist[@]}"; do
+    # remove files for the slot
+    rm "$DEST_DIR$i"
+  done
+
+  # remove the folders 
+  delfolders
+
+  installedslot=""
+}
+
+# Install the selected slot
+function installslot() {
+  # first we do the maps
+  addfolders
+
+  # we do symbolic links for files
+  local flist=($(getfiles))
+  for i in "${flist[@]}"; do
+    ln -s "$SRC_DIR/$PREFIX$slot$i" "$DEST_DIR$i"
+  done
+  
+}
+
+#-------------------------------------------------
+# Main part of the script
+#-------------------------------------------------
+
+# Before start we get the installed slots
 get_installedslot
 
 if [ "$1" == "-a" ] || [ "$1" == "--available" ]; then
@@ -182,7 +187,6 @@ elif [ "$1" == "-s" ]; then
   else 
     write_warning "No slot provided"
   fi
-
   exit
 elif [ "$1" == "-r" ] || [ "$1" == "--remove" ]; then
   if [ "$installedslot" != "" ]; then
