@@ -1,4 +1,26 @@
 #!/bin/bash
+# ---------------------------------------------------------------------------
+# postges_slot - shell script template generator
+
+# Copyright 2014, Jure Kobal <kobalj at gmail dot com>
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License at <http://www.gnu.org/licenses/> for
+# more details.
+
+# Usage: postgres_slot [command]
+
+# Revision history:
+# ---------------------------------------------------------------------------
+PROGNAME=${0##*/}
+VERSION="1.0"
 
 # global variables
 PREFIX="postgresql-"
@@ -101,14 +123,18 @@ function write_info() {
 
 # Display commands
 function help() {
-  echo "Use: pg-slot [argument]"
-  echo "PostgreSQL slot selector"
-  echo ""
-  echo "Available arguments"
-  echo "-a, --available 	Displays the available slots"
-  echo "-s [slot], --set [slot]	Sets/replaces the selected slot"
-  echo "-r, --remove		Removes the selected slot"
-  echo "-h, --help		Displays this help"
+  cat <<- _EOF_
+  ${PROGNAME} ${VERSION}
+  Script for manipulating with installed PostgreSQL slot.
+
+  Options:
+  
+  -h, --help                Displays this help
+  -a, --available           Displays the available slots
+  -s [slot], --set [slot]   Sets/replaces the selected slot
+  -r, --remove              Removes the selected slot
+
+_EOF_
 }
 
 # Displax coutner
