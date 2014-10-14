@@ -41,6 +41,8 @@ function help() {
   -a, --available           Displays the available slots
   -s [slot], --set [slot]   Sets/replaces the selected slot
   -r, --remove              Removes the selected slot
+  -u [slot], --unser [slot] Unset/remove specific slot if it is the 
+                            selected one
 
 _EOF_
 }
@@ -161,7 +163,7 @@ get_installedslot
 if [ "$1" == "-a" ] || [ "$1" == "--available" ]; then
   display_slots
   exit
-elif [ "$1" == "-s" ]; then
+elif [ "$1" == "-s" ] || [ "$1" == "--set" ]; then
   array=($(availableslots))
 
   if [ "$2" != "" ]; then
@@ -197,6 +199,20 @@ elif [ "$1" == "-r" ] || [ "$1" == "--remove" ]; then
   else 
     write_warning "Slot is not set"
   fi
+  exit
+elif [ "$1" == "-u" ] || [ "$1" == "--unset"  ]; then
+  if [ "$2" != "" ]; then
+    if [ "$2" == "$installedslot" ]; then
+      write_info "Removing slot $installedslot"
+      slot=$installedslot
+      removeinstalledslot
+      write_info "Slot $installedslot removed"
+    else
+      write_info "Provided slot $2 is not set"
+    fi
+  else
+    write_warning "No slot provided"
+  fi  
   exit
 else
   help
