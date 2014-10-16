@@ -41,7 +41,7 @@ function help() {
   -a, --available           Displays the available slots
   -s [slot], --set [slot]   Sets/replaces the selected slot
   -r, --remove              Removes the selected slot
-  -u [slot], --unser [slot] Unset/remove specific slot if it is the 
+  -u [slot], --unset [slot] Unset/remove specific slot if it is the 
                             selected one
 
 _EOF_
