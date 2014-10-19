@@ -18,9 +18,11 @@
 # Usage: postgres_slot [command]
 
 # Revision history:
+# 2014.10.19 - fixed display of slot to be removed with -s command
+#
 # ---------------------------------------------------------------------------
 PROGNAME=${0##*/}
-VERSION="1.0"
+VERSION="1.1"
 
 # Global variables
 PREFIX="postgresql-"
@@ -171,7 +173,7 @@ elif [ "$1" == "-s" ] || [ "$1" == "--set" ]; then
       # found the slot, check if another slot is installed
       if [ "$installedslot" != "" ]; then
         write_warning "Found installed slot $installedslot"
-        warning_count "Removing slot $2"
+        warning_count "Removing slot $installedslot"
         slot=$installedslot
         removeinstalledslot
         write_info "Slot $slot removed"
