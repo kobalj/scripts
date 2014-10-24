@@ -1,6 +1,6 @@
 #!/bin/bash
 # ---------------------------------------------------------------------------
-# postges_slot - shell script template generator
+# postges_slot - schell script to work with PostgreSQL slots
 
 # Copyright 2014, Jure Kobal <kobalj at gmail dot com>
 
@@ -19,10 +19,11 @@
 
 # Revision history:
 # 2014.10.19 - fixed display of slot to be removed with -s command
+# 2014.10.24 - fixed error in header of the script
 #
 # ---------------------------------------------------------------------------
 PROGNAME=${0##*/}
-VERSION="1.1"
+VERSION="1.2"
 
 # Global variables
 PREFIX="postgresql-"
