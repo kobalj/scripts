@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<service>
+  <short>MPD</short>
+  <description>Music Player Daemon (MPD) is a flexible, powerful, server-side application for playing music.</description>
+  <port protocol="tcp" port="6600"/>
+</service>
