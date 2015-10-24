@@ -1,10 +1,10 @@
---- etc-update.orig	2012-01-29 12:57:16.311869407 +1000
-+++ etc-update	2012-01-29 13:37:15.892883106 +1000
+--- etc-update.gentoo	2015-06-27 11:35:05.000000000 +0200
++++ etc-update.centos	2015-10-24 21:08:21.276784425 +0200
 @@ -3,6 +3,8 @@
  # Distributed under the terms of the GNU General Public License v2
  # $Id: etc-update 13723 2009-06-28 16:12:28Z vapier $
  
-+# Ported to Arch Linux by Adam Nielsen <malvineous@shikadi.net>
++# Ported to CentOS by Jure Kobal <>
 +
  # Author Brandon Low <lostlogic@gentoo.org>
  #
@@ -14,26 +14,26 @@
  		path="${ROOT}${path}"
  		# Do not traverse hidden directories such as .svn or .git.
 -		find_opts="-name .* -type d -prune -o -name ._cfg????_*"
-+		find_opts="-name .* -type d -prune -o -name *.pacnew"
++		find_opts="-name .* -type d -prune -o -name *.rpmnew"
  		if [ ! -d "${path}" ]; then
  			[ ! -f "${path}" ] && continue
  			my_basename="${path##*/}"
  			path="${path%/*}"
 -			find_opts="-maxdepth 1 -name ._cfg????_${my_basename}"
-+			find_opts="-maxdepth 1 -name *.pacnew"
++			find_opts="-maxdepth 1 -name .rpmnew"
  		fi
  
 -		ofile=""
-+		ofile=".pacnew"
++		ofile=".rpmnew"
  		# The below set -f turns off file name globbing in the ${find_opts} expansion.
  		for file in $(set -f ; find ${path}/ ${find_opts} \
  		       ! -name '.*~' ! -iname '.*.bak' -print |
 -			   sed -e "s:\(^.*/\)\(\._cfg[0-9]*_\)\(.*$\):\1\2\3\%\1%\2\%\3:" |
-+			   sed -e "s:\(^.*/\)\(.*$\)\(\.pacnew\):\1\2\3\%\1%\2\%\3:" |
++			   sed -e "s:\(^.*/\)\(.*$\)\(\.rpmnew\):\1\2\3\%\1%\2\%\3:" |
  			   sort -t'%' -k2,2 -k4,4 -k3,3 | LANG=POSIX LC_ALL=POSIX cut -f1 -d'%'); do
  
  			rpath=$(echo "${file/\/\///}" | sed -e "s:/[^/]*$::")
-@@ -72,36 +74,37 @@
+@@ -72,7 +74,7 @@
  				mpath="${ROOT}${mpath}"
  				mpath=$(echo "${mpath/\/\///}")
  				if [[ "${rpath}" == "${mpath}"* ]]; then
@@ -42,9 +42,7 @@
  					break
  				fi
  			done
-+
- 			if [[ ! -f ${file} ]] ; then
- 				echo "Skipping non-file ${file} ..."
+@@ -81,27 +83,27 @@
  				continue
  			fi
  
@@ -69,7 +67,7 @@
  				if [[ "${MATCHES}" == "1" ]]; then
 -					echo "Automerging trivial changes in: ${rpath}/${rfile:10}"
 -					mv ${rpath}/${rfile} ${rpath}/${rfile:10}
-+					echo "Automerging trivial changes in: ${rpath}/${rfile::-7}"
++					echo "Automerging trivial changes in: ${rpath}/${rfile:::-7}"
 +					mv ${rpath}/${rfile} ${rpath}/${rfile::-7}
  					continue
  				else
@@ -79,7 +77,18 @@
  					echo "${rpath}/${rfile}" >> ${TMP}/files/${count}
  					ofile="${rfile}"
  					opath="${rpath}"
-@@ -494,10 +497,16 @@
+@@ -446,8 +448,8 @@
+ }
+ 
+ die() {
+-	trap SIGTERM
+-	trap SIGINT
++	trap - SIGTERM
++	trap - SIGINT
+ 
+ 	if [ "$2" -eq 0 ]; then
+ 		echo "Exiting: ${1}"
+@@ -494,10 +496,16 @@
  done
  ${SET_X} && set -x
  
@@ -89,7 +98,7 @@
 -export PORTAGE_TMPDIR
 +# These paths are relative to ${ROOT}
 +export CONFIG_PROTECT="/etc /usr/lib /usr/share/config"
-+export CONFIG_PROTECT_MASK="/etc/arch-release /etc/udev/rules.d"
++export CONFIG_PROTECT_MASK="/etc/centos-release /etc/centos-release-upstream /etc/udev/rules.d"
 +# Location of etc-update.conf
 +export PORTAGE_CONFIGROOT="/"
 +# Place to store temp files while merging
@@ -100,12 +109,12 @@
  
  TMP="${PORTAGE_TMPDIR}/etc-update-$$"
  trap "die terminated 1" SIGTERM
-@@ -563,7 +572,7 @@
+@@ -563,7 +571,7 @@
  
  declare -i count=0
  declare input=0
 -declare title="Gentoo's etc-update tool!"
-+declare title="Arch Linux etc-update tool!"
++declare title="CetnOS's etc-update tool!"
  
  scan
  
