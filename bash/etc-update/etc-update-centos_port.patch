@@ -67,7 +67,7 @@
  				if [[ "${MATCHES}" == "1" ]]; then
 -					echo "Automerging trivial changes in: ${rpath}/${rfile:10}"
 -					mv ${rpath}/${rfile} ${rpath}/${rfile:10}
-+					echo "Automerging trivial changes in: ${rpath}/${rfile:::-7}"
++					echo "Automerging trivial changes in: ${rpath}/${rfile::-7}"
 +					mv ${rpath}/${rfile} ${rpath}/${rfile::-7}
  					continue
  				else
