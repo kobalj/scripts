@@ -1,0 +1,16 @@
+[Unit]
+Description=Sonatype Nexus maven repository manager
+After=network.target
+
+[Service]
+Type=forking
+
+User=nexus
+Group=nexus
+
+ExecStart=/usr/share/nexus/bin/nexus start
+ExecReload=/usr/share/nexus/bin/nexus reload
+ExecStop=/usr/share/nexus/bin/nexus stop
+
+[Install]
+WantedBy=multi-user.target
